@@ -1,0 +1,26 @@
+service: dolar-historico
+
+provider:
+  name: aws
+  stage: ${opt:stage, env:NODE_ENV, "dev"}
+  runtime: nodejs8.10
+  environment: ${file(./config/env.${self:provider.stage}.yml)}
+  timeout: 30
+plugins:
+  - serverless-pseudo-parameters
+
+functions:
+  dolar-puppeteer:
+    handler: dolar-puppeteer.handler
+    events:
+      - schedule: cron(45 23 ? * MON-FRI *)
+    layers:
+      - {Ref: ChromeLambdaLayer}
+  dolar-jsdom:
+    handler: dolar-jsdom.handler
+    events:
+      - schedule: cron(45 23 ? * MON-FRI *)
+
+layers:
+  chrome:
+    path: layer

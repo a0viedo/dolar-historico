@@ -18,12 +18,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/RafalWilinski/serverless-puppeteer-layers.git"
+    "url": "git+https://github.com/a0viedo/dolar-historico"
   },
   "author": "Alejandro Oviedo <alejandro.oviedo.g@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/RafalWilinski/serverless-puppeteer-layers/issues"
+    "url": "https://github.com/a0viedo/dolar-historico/issues"
   },
-  "homepage": "https://github.com/RafalWilinski/serverless-puppeteer-layers#readme"
+  "homepage": "https://github.com/a0viedo/dolar-historico"
 }

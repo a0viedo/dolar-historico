@@ -1,5 +1,5 @@
 {
-  "name": "serverless-puppeteer-layers",
+  "name": "dolar-historico",
   "version": "1.0.0",
   "description": "",
   "main": "handler.js",
@@ -20,7 +20,7 @@
     "type": "git",
     "url": "git+https://github.com/RafalWilinski/serverless-puppeteer-layers.git"
   },
-  "author": "Rafal Wilinski",
+  "author": "Alejandro Oviedo <alejandro.oviedo.g@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/RafalWilinski/serverless-puppeteer-layers/issues"

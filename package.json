@@ -6,7 +6,7 @@
   "dependencies": {
     "googleapis": "^37.1.0",
     "jsdom": "^13.2.0",
-    "puppeteer": "^1.11.0",
+    "puppeteer": "^2.1.1",
     "request-promise": "^4.2.2"
   },
   "devDependencies": {

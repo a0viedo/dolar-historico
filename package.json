@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "dotenv": "^6.2.0",
-    "serverless-pseudo-parameters": "^2.4.0"
+    "serverless-pseudo-parameters": "^2.5.0"
   },
   "scripts": {
     "deploy": "serverless deploy"

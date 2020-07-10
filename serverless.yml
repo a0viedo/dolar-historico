@@ -3,24 +3,25 @@ service: dolar-historico
 provider:
   name: aws
   stage: ${opt:stage, env:NODE_ENV, "dev"}
-  runtime: nodejs8.10
+  runtime: nodejs12.x
+  memorySize: 1600
+  # timeout: 180
   environment: ${file(./config/env.${self:provider.stage}.yml)}
-  timeout: 30
+  layers:
+    # https://github.com/shelfio/chrome-aws-lambda-layer
+    - arn:aws:lambda:${self:provider.region}:764866452798:layer:chrome-aws-lambda:10
 plugins:
   - serverless-pseudo-parameters
 
 functions:
   dolar-puppeteer:
-    handler: dolar-puppeteer.handler
+    handler: index.handler
+    timeout: 20
     events:
-      - schedule: cron(45 23 ? * MON-FRI *)
-    layers:
-      - {Ref: ChromeLambdaLayer}
+      - schedule: cron(15 14 ? * MON-FRI *)
   dolar-jsdom:
     handler: dolar-jsdom.handler
     events:
       - schedule: cron(45 23 ? * MON-FRI *)
 
-layers:
-  chrome:
-    path: layer
+

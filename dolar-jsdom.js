@@ -2,20 +2,15 @@
 
 const { google } = require('googleapis');
 const util = require('util');
-const spreadsheet = {};
 const request = require('request-promise');
 const jsdom = require('jsdom');
 if(process.env.NODE_ENV === 'dev') {
   require('dotenv').config();
 }
-
+let sheets;
 module.exports.handler = async () => {
   const auth = authorize();
-  const sheets = google.sheets({ version: 'v4', auth });
-  spreadsheet.update = util.promisify(sheets.spreadsheets.values.update);
-  spreadsheet.create = util.promisify(sheets.spreadsheets.create);
-  spreadsheet.batchUpdate = util.promisify(sheets.spreadsheets.batchUpdate);
-  spreadsheet.get = util.promisify(sheets.spreadsheets.get);
+  sheets = google.sheets({ version: 'v4', auth });
 
   try {
     const sheetList = await getSheetList();
@@ -41,23 +36,19 @@ module.exports.handler = async () => {
 };
 
 function authorize() {
-  const oAuth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI
-  );
-  oAuth2Client.setCredentials({
-    access_token: process.env.GOOGLE_ACCESS_TOKEN,
-    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-    expiry_date: process.env.GOOGLE_EXPIRY_DATE,
-    token_type: process.env.GOOGLE_TOKEN_TYPE
+  const oAuth2Client = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/gm, '\n')
+    },
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
   return oAuth2Client;
 }
 
 async function writeToSheet(range, data) {
   console.log(data);
-  return spreadsheet.update({
+  return sheets.spreadsheets.values.update({
     spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID,
     range,
     resource: {
@@ -68,7 +59,7 @@ async function writeToSheet(range, data) {
 }
 
 async function addSheet(name) {
-  return spreadsheet.batchUpdate({
+  return sheets.spreadsheets.batchUpdate({
     spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID,
     resource: {
       requests: [
@@ -207,7 +198,7 @@ async function deleteLastSheet(sheetList) {
 }
 
 async function getSheetList() {
-  const result = await spreadsheet.get({
+  const result = await sheets.spreadsheets.get({
     spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID
   });
   return result.data.sheets.map(sheet => sheet.properties.sheetId);

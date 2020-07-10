@@ -2,28 +2,22 @@
   "name": "dolar-historico",
   "version": "1.0.0",
   "description": "",
-  "main": "handler.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dólar",
+    "histórico"
+  ],
+  "author": "Alejandro Oviedo <alejandro.oviedo.g@gmail.com",
+  "license": "MIT",
   "dependencies": {
-    "googleapis": "^49.0.0",
-    "jsdom": "^16.2.2",
-    "puppeteer": "^4.0.0",
-    "request-promise": "^4.2.5"
+    "googleapis": "^52.1.0"
   },
   "devDependencies": {
-    "dotenv": "^6.2.0",
-    "serverless-pseudo-parameters": "^2.5.0"
-  },
-  "scripts": {
-    "deploy": "serverless deploy"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/a0viedo/dolar-historico"
-  },
-  "author": "Alejandro Oviedo <alejandro.oviedo.g@gmail.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/a0viedo/dolar-historico/issues"
-  },
-  "homepage": "https://github.com/a0viedo/dolar-historico"
+    "chrome-aws-lambda": "^3.1.1",
+    "puppeteer": "^5.0.0",
+    "serverless-pseudo-parameters": "^2.4.0"
+  }
 }

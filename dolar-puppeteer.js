@@ -1,21 +1,11 @@
 'use strict';
 
 const { google } = require('googleapis');
-const puppeteer = require('puppeteer');
-const util = require('util');
-const spreadsheet = {};
-if(process.env.NODE_ENV === 'dev') {
-  require('dotenv').config();
-}
-
+const chromium = require('chrome-aws-lambda');
+let sheets;
 module.exports.handler = async () => {
   const auth = authorize();
-  const sheets = google.sheets({ version: 'v4', auth });
-  spreadsheet.update = util.promisify(sheets.spreadsheets.values.update);
-  spreadsheet.create = util.promisify(sheets.spreadsheets.create);
-  spreadsheet.batchUpdate = util.promisify(sheets.spreadsheets.batchUpdate);
-  spreadsheet.get = util.promisify(sheets.spreadsheets.get);
-
+  sheets = google.sheets({ version: 'v4', auth });
   try {
     const sheetList = await getSheetList();
     if(sheetList.length >= 200) {
@@ -27,35 +17,32 @@ module.exports.handler = async () => {
       await getData()
     ]);
 
-    const sortedData = [data.shift(), ...sortData(data)];
     const sheetId = getSheetId(result);
-    await writeToSheet(`${sheetName}!${getDataRange(sortedData)}`, sortedData);
-    await formatSheet(sheetId, sortedData);
+    await Promise.all([
+      await formatSheet(sheetId, data),
+      await writeToSheet(`${sheetName}!${getDataRange(data)}`, data),
+    ]);
 
     console.log(`finished writing data and formatting sheetId ${sheetId} (name "${sheetName}")`);
-    return {};
   } catch(err) {
     console.log('There was an error', err);
+    process.exit(1);
   }
 };
 
 function authorize() {
-  const oAuth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI
-  );
-  oAuth2Client.setCredentials({
-    access_token: process.env.GOOGLE_ACCESS_TOKEN,
-    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-    expiry_date: process.env.GOOGLE_EXPIRY_DATE,
-    token_type: process.env.GOOGLE_TOKEN_TYPE
+  const oAuth2Client = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/gm, '\n')
+    },
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
   return oAuth2Client;
 }
 
 async function writeToSheet(range, data) {
-  return spreadsheet.update({
+  return sheets.spreadsheets.values.update({
     spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID,
     range,
     resource: {
@@ -66,7 +53,7 @@ async function writeToSheet(range, data) {
 }
 
 async function addSheet(name) {
-  return spreadsheet.batchUpdate({
+  return sheets.spreadsheets.batchUpdate({
     spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID,
     resource: {
       requests: [
@@ -84,10 +71,25 @@ async function addSheet(name) {
 }
 
 async function formatSheet(sheetId, data) {
-  return spreadsheet.batchUpdate({
+  return sheets.spreadsheets.batchUpdate({
     spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID,
     resource: {
       requests: [
+        // make first column wider
+        {
+          updateDimensionProperties: {
+            range: {
+              sheetId: sheetId,
+              dimension: 'COLUMNS',
+              startIndex: 0,
+              endIndex: 1
+            },
+            properties: {
+              pixelSize: 185
+            },
+            fields: 'pixelSize'
+          }
+        },
         // add borders
         {
           updateBorders: {
@@ -182,7 +184,6 @@ async function formatSheet(sheetId, data) {
             }
           }
         }
-
       ],
     }
   });
@@ -190,7 +191,7 @@ async function formatSheet(sheetId, data) {
 
 async function deleteLastSheet(sheetList) {
   const sheetId = sheetList[sheetList.length -1];
-  return spreadsheet.batchUpdate({
+  return sheets.spreadsheets.batchUpdate({
     spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID,
     resource: {
       requests: [
@@ -205,7 +206,7 @@ async function deleteLastSheet(sheetList) {
 }
 
 async function getSheetList() {
-  const result = await spreadsheet.get({
+  const result = await sheets.spreadsheets.get({
     spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID
   });
   return result.data.sheets.map(sheet => sheet.properties.sheetId);
@@ -224,10 +225,12 @@ function getDataRange(data){
 async function getData() {
   console.log(`starting to get data from ${process.env.CRAWL_URL}`);
   const before = new Date();
-  const browser = await puppeteer.launch({
-    headless: true,
-    executablePath: '/opt/headless_shell',
-    args: ['--no-sandbox', '--disable-gpu', '--single-process', '--disable-setuid-sandbox'],
+  const browser = await chromium.puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath,
+    headless: chromium.headless,
+    ignoreHTTPSErrors: true,
   });
   const page = await browser.newPage();
   await page.setJavaScriptEnabled(false);
@@ -243,23 +246,20 @@ async function getData() {
   await page.goto(process.env.CRAWL_URL, {});
 
   const data = await page.evaluate(() => {
-    const result = [];
-    const table = document.querySelector('#ctl00_PlaceHolderMainContent_GridViewDolar');
-    for(let i = 0; i < table.rows.length; i++) {
+    const result = [['Entidad', 'Compra', 'Venta']];
+    const table = document.querySelector('#Dolar');
+    for(let i = 1; i < table.rows.length; i++) {
       let tr = table.rows[i];
       result.push([
-        tr.children[0].innerText.trim(),
+        tr.children[0].children[1].firstChild.nodeValue.trim(),
         tr.children[1].innerText.split('\n')[0],
         tr.children[2].innerText.split('\n')[0]
       ]);
     }
     return result;
   });
+
   console.log(`finished to get crawler data in ${new Date().getTime() - before.getTime()} milliseconds`);
 
   return data;
-}
-
-function sortData(data) {
-  return data.sort((a, b) => a[0].localeCompare(b[0]));
 }

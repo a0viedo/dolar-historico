@@ -16,7 +16,7 @@
     "googleapis": "^52.1.0"
   },
   "devDependencies": {
-    "chrome-aws-lambda": "^3.1.1",
+    "chrome-aws-lambda": "^5.3.0",
     "puppeteer": "^5.0.0",
     "serverless-pseudo-parameters": "^2.4.0"
   }

@@ -1,0 +1,30 @@
+version: 2
+updates:
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: weekly
+    time: "09:00"
+  open-pull-requests-limit: 10
+  assignees:
+  - a0viedo
+  ignore:
+  - dependency-name: googleapis
+    versions:
+    - 67.0.0
+    - 67.1.0
+    - 67.1.1
+    - 68.0.0
+    - 70.0.0
+    - 71.0.0
+  - dependency-name: chrome-aws-lambda
+    versions:
+    - 5.5.0
+    - 7.0.0
+    - 8.0.0
+  - dependency-name: puppeteer
+    versions:
+    - 5.5.0
+    - 7.0.1
+    - 7.1.0
+    - 8.0.0

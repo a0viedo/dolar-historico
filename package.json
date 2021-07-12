@@ -13,7 +13,7 @@
   "author": "Alejandro Oviedo <alejandro.oviedo.g@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "googleapis": "^52.1.0"
+    "googleapis": "^81.0.0"
   },
   "devDependencies": {
     "chrome-aws-lambda": "^3.1.1",
